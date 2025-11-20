@@ -1,0 +1,1495 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API de Agendamento v2",
+    "version": "1.0.0",
+    "description": "API REST completa para sistema de agendamentos com autenticação via API Key",
+    "contact": {
+      "name": "API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api/v1",
+      "description": "Servidor de desenvolvimento"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API Key",
+        "description": "API Key no formato: sk_<apiClientId>_<random>"
+      },
+      "JWT": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token do Supabase (apenas para endpoints administrativos)"
+      }
+    },
+    "schemas": {
+      "ApiResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object"
+          },
+          "error": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "object"
+          }
+        }
+      },
+      "Company": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["super_admin", "admin"]
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ApiKey": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string",
+            "description": "Chave completa (apenas na criação)"
+          },
+          "maskedKey": {
+            "type": "string",
+            "description": "Chave mascarada para exibição"
+          },
+          "label": {
+            "type": "string"
+          },
+          "revoked": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revokedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "Professional": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Service": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "durationMinutes": {
+            "type": "integer"
+          },
+          "price": {
+            "type": "number",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Availability": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "professionalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dayOfWeek": {
+            "type": "integer",
+            "description": "0 = Domingo, 1 = Segunda, ..., 6 = Sábado",
+            "minimum": 0,
+            "maximum": 6
+          },
+          "startTime": {
+            "type": "string",
+            "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$"
+          },
+          "endTime": {
+            "type": "string",
+            "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Slot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "professionalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "serviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isAvailable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Booking": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "professionalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "serviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "customerEmail": {
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          },
+          "customerPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": ["confirmed", "cancelled"]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Administrativos",
+      "description": "Endpoints administrativos (requerem autenticação JWT - Super Admin ou Admin)"
+    },
+    {
+      "name": "Agendamentos",
+      "description": "Endpoints de agendamento (requerem autenticação via API Key)"
+    }
+  ],
+  "paths": {
+    "/companies": {
+      "get": {
+        "tags": ["Administrativos"],
+        "summary": "Listar todas as companies",
+        "description": "Lista todas as companies do sistema. Requer autenticação como Super Admin.",
+        "security": [{"JWT": []}],
+        "responses": {
+          "200": {
+            "description": "Lista de companies retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Company"}
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "name": "Minha Empresa",
+                      "slug": "minha-empresa",
+                      "created_at": "2024-01-01T00:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Administrativos"],
+        "summary": "Criar uma nova company",
+        "description": "Cria uma nova company no sistema. Requer autenticação como Super Admin.",
+        "security": [{"JWT": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "slug"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "Minha Empresa"
+                  },
+                  "slug": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "example": "minha-empresa"
+                  }
+                }
+              },
+              "example": {
+                "name": "Minha Empresa",
+                "slug": "minha-empresa"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Company criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {"$ref": "#/components/schemas/Company"}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "Minha Empresa",
+                    "slug": "minha-empresa",
+                    "created_at": "2024-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Validation error",
+                  "errors": {
+                    "name": ["Required"],
+                    "slug": ["String must match pattern ^[a-z0-9-]+$"]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": ["Administrativos"],
+        "summary": "Listar todos os usuários",
+        "description": "Lista todos os usuários do sistema. Requer autenticação como Super Admin.",
+        "security": [{"JWT": []}],
+        "responses": {
+          "200": {
+            "description": "Lista de usuários retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/User"}
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "email": "admin@empresa.com",
+                      "name": "Admin User",
+                      "role": "admin",
+                      "companyId": "123e4567-e89b-12d3-a456-426614174001",
+                      "createdAt": "2024-01-01T00:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Administrativos"],
+        "summary": "Criar um novo usuário",
+        "description": "Cria um novo usuário e envia convite por email. Requer autenticação como Super Admin.",
+        "security": [{"JWT": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "name", "role"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "admin@empresa.com"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "Admin User"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": ["super_admin", "admin"],
+                    "example": "admin"
+                  },
+                  "companyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Obrigatório se role for 'admin'",
+                    "example": "123e4567-e89b-12d3-a456-426614174001"
+                  }
+                }
+              },
+              "example": {
+                "email": "admin@empresa.com",
+                "name": "Admin User",
+                "role": "admin",
+                "companyId": "123e4567-e89b-12d3-a456-426614174001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuário criado e convite enviado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {"$ref": "#/components/schemas/User"}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "email": "admin@empresa.com",
+                    "name": "Admin User",
+                    "role": "admin",
+                    "companyId": "123e4567-e89b-12d3-a456-426614174001"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "validation": {
+                    "value": {
+                      "success": false,
+                      "error": "Validation error",
+                      "errors": {
+                        "email": ["Invalid email"],
+                        "role": ["Invalid enum value"]
+                      }
+                    }
+                  },
+                  "missingCompanyId": {
+                    "value": {
+                      "success": false,
+                      "error": "companyId is required for admin role"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api-keys": {
+      "get": {
+        "tags": ["Administrativos"],
+        "summary": "Listar API Keys",
+        "description": "Lista todas as API Keys da company do usuário autenticado. Requer autenticação como Admin.",
+        "security": [{"JWT": []}],
+        "responses": {
+          "200": {
+            "description": "Lista de API Keys retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/ApiKey"}
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "maskedKey": "sk_abc123_****...",
+                      "label": "Produção",
+                      "revoked": false,
+                      "createdAt": "2024-01-01T00:00:00Z",
+                      "revokedAt": null
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Usuário não associado a uma company",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "User must be associated with a company"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Administrativos"],
+        "summary": "Gerar nova API Key",
+        "description": "Gera uma nova API Key para a company do usuário autenticado. A chave completa é retornada apenas uma vez. Requer autenticação como Admin.",
+        "security": [{"JWT": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["label"],
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "Produção"
+                  }
+                }
+              },
+              "example": {
+                "label": "Produção"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "API Key gerada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {"$ref": "#/components/schemas/ApiKey"}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "key": "sk_abc123_def456_ghi789jkl012mno345pqr678stu901vwx234yz",
+                    "label": "Produção",
+                    "createdAt": "2024-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação ou usuário não associado a company",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "validation": {
+                    "value": {
+                      "success": false,
+                      "error": "Validation error",
+                      "errors": {
+                        "label": ["Required"]
+                      }
+                    }
+                  },
+                  "noCompany": {
+                    "value": {
+                      "success": false,
+                      "error": "User must be associated with a company"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api-keys/{id}/revoke": {
+      "patch": {
+        "tags": ["Administrativos"],
+        "summary": "Revogar API Key",
+        "description": "Revoga uma API Key específica. Requer autenticação como Admin.",
+        "security": [{"JWT": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API Key revogada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "API key revoked successfully"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "message": "API key revoked successfully"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Usuário não associado a uma company",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "User must be associated with a company"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "API Key não encontrada",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "API key not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/professionals": {
+      "post": {
+        "tags": ["Agendamentos"],
+        "summary": "Criar Professional",
+        "description": "Cria um novo professional na company associada à API Key.",
+        "security": [{"ApiKeyAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "Dr. João Silva"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "nullable": true,
+                    "example": "joao@example.com"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "+5511999999999"
+                  }
+                }
+              },
+              "example": {
+                "name": "Dr. João Silva",
+                "email": "joao@example.com",
+                "phone": "+5511999999999"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Professional criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {"$ref": "#/components/schemas/Professional"}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "Dr. João Silva",
+                    "email": "joao@example.com",
+                    "phone": "+5511999999999",
+                    "created_at": "2024-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Validation error",
+                  "errors": {
+                    "name": ["Required"],
+                    "email": ["Invalid email"]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/professionals/{id}/slots": {
+      "get": {
+        "tags": ["Agendamentos"],
+        "summary": "Buscar Slots Disponíveis",
+        "description": "Busca slots disponíveis para um professional em um período específico.",
+        "security": [{"ApiKeyAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "serviceId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID do serviço (opcional)",
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Data/hora inicial (ISO 8601)",
+            "example": "2024-01-01T00:00:00Z"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Data/hora final (ISO 8601)",
+            "example": "2024-01-31T23:59:59Z"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de slots disponíveis retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Slot"}
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "professionalId": "123e4567-e89b-12d3-a456-426614174001",
+                      "serviceId": "123e4567-e89b-12d3-a456-426614174002",
+                      "startTime": "2024-01-15T09:00:00Z",
+                      "endTime": "2024-01-15T09:30:00Z",
+                      "isAvailable": true
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parâmetros de query obrigatórios ausentes",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Query parameters 'from' and 'to' are required (ISO date strings)"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/services": {
+      "post": {
+        "tags": ["Agendamentos"],
+        "summary": "Criar Service",
+        "description": "Cria um novo serviço na company associada à API Key.",
+        "security": [{"ApiKeyAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "durationMinutes"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "Consulta Médica"
+                  },
+                  "durationMinutes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 30
+                  },
+                  "price": {
+                    "type": "number",
+                    "minimum": 0,
+                    "nullable": true,
+                    "example": 150.0
+                  }
+                }
+              },
+              "example": {
+                "name": "Consulta Médica",
+                "durationMinutes": 30,
+                "price": 150.0
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Service criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {"$ref": "#/components/schemas/Service"}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "Consulta Médica",
+                    "durationMinutes": 30,
+                    "price": 150.0,
+                    "created_at": "2024-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Validation error",
+                  "errors": {
+                    "name": ["Required"],
+                    "durationMinutes": ["Expected number, received string"]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/availabilities": {
+      "post": {
+        "tags": ["Agendamentos"],
+        "summary": "Criar Availability",
+        "description": "Cria uma nova disponibilidade para um professional.",
+        "security": [{"ApiKeyAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["professionalId", "dayOfWeek", "startTime", "endTime"],
+                "properties": {
+                  "professionalId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                  },
+                  "dayOfWeek": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 6,
+                    "description": "0 = Domingo, 1 = Segunda, ..., 6 = Sábado",
+                    "example": 1
+                  },
+                  "startTime": {
+                    "type": "string",
+                    "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$",
+                    "example": "09:00"
+                  },
+                  "endTime": {
+                    "type": "string",
+                    "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$",
+                    "example": "18:00"
+                  }
+                }
+              },
+              "example": {
+                "professionalId": "123e4567-e89b-12d3-a456-426614174000",
+                "dayOfWeek": 1,
+                "startTime": "09:00",
+                "endTime": "18:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Availability criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {"$ref": "#/components/schemas/Availability"}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "professionalId": "123e4567-e89b-12d3-a456-426614174001",
+                    "dayOfWeek": 1,
+                    "startTime": "09:00",
+                    "endTime": "18:00",
+                    "created_at": "2024-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Validation error",
+                  "errors": {
+                    "dayOfWeek": ["Number must be less than or equal to 6"],
+                    "startTime": ["String must match pattern"]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Professional não encontrado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Professional not found or doesn't belong to your company"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bookings": {
+      "post": {
+        "tags": ["Agendamentos"],
+        "summary": "Criar Booking",
+        "description": "Cria um novo agendamento. O slot deve estar disponível e pertencer ao professional e service especificados.",
+        "security": [{"ApiKeyAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["professionalId", "serviceId", "slotId", "customerName"],
+                "properties": {
+                  "professionalId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                  },
+                  "serviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "123e4567-e89b-12d3-a456-426614174001"
+                  },
+                  "slotId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "123e4567-e89b-12d3-a456-426614174002"
+                  },
+                  "customerName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "Maria Santos"
+                  },
+                  "customerEmail": {
+                    "type": "string",
+                    "format": "email",
+                    "nullable": true,
+                    "example": "maria@example.com"
+                  },
+                  "customerPhone": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "+5511888888888"
+                  }
+                }
+              },
+              "example": {
+                "professionalId": "123e4567-e89b-12d3-a456-426614174000",
+                "serviceId": "123e4567-e89b-12d3-a456-426614174001",
+                "slotId": "123e4567-e89b-12d3-a456-426614174002",
+                "customerName": "Maria Santos",
+                "customerEmail": "maria@example.com",
+                "customerPhone": "+5511888888888"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Booking criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {"$ref": "#/components/schemas/Booking"}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "professionalId": "123e4567-e89b-12d3-a456-426614174001",
+                    "serviceId": "123e4567-e89b-12d3-a456-426614174002",
+                    "slotId": "123e4567-e89b-12d3-a456-426614174003",
+                    "customerName": "Maria Santos",
+                    "customerEmail": "maria@example.com",
+                    "customerPhone": "+5511888888888",
+                    "status": "confirmed",
+                    "created_at": "2024-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação ou slot não disponível",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "validation": {
+                    "value": {
+                      "success": false,
+                      "error": "Validation error",
+                      "errors": {
+                        "customerName": ["Required"],
+                        "slotId": ["Invalid uuid"]
+                      }
+                    }
+                  },
+                  "slotUnavailable": {
+                    "value": {
+                      "success": false,
+                      "error": "Slot is not available"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Professional, service or slot not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

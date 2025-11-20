@@ -9,6 +9,7 @@ Sistema de agendamento completo com API REST e painel administrativo. Este MVP p
 - **Banco de Dados**: Supabase (PostgreSQL)
 - **Autenticação**: Supabase Auth (painel) + API Key (consumo da API)
 - **Hash de API Keys**: Argon2
+- **Documentação API**: Swagger UI / OpenAPI 3.0
 
 ## 📋 Pré-requisitos
 
@@ -82,6 +83,21 @@ npm run dev
 
 A aplicação estará disponível em `http://localhost:3000`
 
+## 📚 Documentação da API
+
+A documentação completa da API está disponível em:
+
+**http://localhost:3000/api-docs**
+
+A documentação inclui:
+
+- Todos os endpoints da API
+- Exemplos de requisições e respostas
+- Códigos de status HTTP
+- Mensagens de erro
+- Exemplos de curl
+- Autenticação (JWT e API Key)
+
 ## 👤 Criando o primeiro usuário
 
 ⚠️ **Importante**: Você precisa criar o primeiro usuário `super_admin` manualmente no Supabase:
@@ -110,6 +126,7 @@ api_agendamento_v2/
 │   │   ├── super-admin/    # Painel Super Admin
 │   │   └── admin/          # Painel Company Admin
 │   ├── api/v1/             # Endpoints da API REST
+│   ├── api-docs/           # Documentação Swagger UI
 │   └── page.tsx             # Página inicial (redireciona)
 ├── components/
 │   ├── ui/                  # Componentes shadcn/ui
@@ -121,7 +138,8 @@ api_agendamento_v2/
 │   ├── auth/               # Helpers de autenticação
 │   ├── api-key/            # Lógica de API Key
 │   ├── logger/             # Sistema de logging
-│   └── services/           # Serviços backend
+│   ├── services/           # Serviços backend
+│   └── swagger/            # Especificação OpenAPI
 ├── supabase/
 │   └── migrations/         # Migrations SQL
 └── types/                   # TypeScript types
@@ -157,7 +175,27 @@ Todos os endpoints de agendamento requerem o header:
 Authorization: Bearer <API_KEY>
 ```
 
-### Endpoints Administrativos (JWT - Painel)
+### Categorias de Endpoints
+
+#### 🔧 Administrativos (JWT - Painel)
+
+Endpoints que requerem autenticação JWT do Supabase:
+
+- **Companies**: Gerenciar empresas (Super Admin)
+- **Users**: Gerenciar usuários (Super Admin)
+- **API Keys**: Gerar e gerenciar API Keys (Admin)
+
+#### 📅 Agendamentos (API Key)
+
+Endpoints que requerem autenticação via API Key:
+
+- **Professionals**: Gerenciar profissionais
+- **Services**: Gerenciar serviços
+- **Availabilities**: Gerenciar disponibilidades
+- **Slots**: Buscar slots disponíveis
+- **Bookings**: Criar agendamentos
+
+### Exemplos de Requisições
 
 #### Criar Company (Super Admin)
 
@@ -171,6 +209,32 @@ curl -X POST http://localhost:3000/api/v1/companies \
   }'
 ```
 
+**Resposta de Sucesso (201)**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "name": "Minha Empresa",
+    "slug": "minha-empresa",
+    "created_at": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+**Resposta de Erro (400)**:
+
+```json
+{
+  "success": false,
+  "error": "Validation error",
+  "errors": {
+    "slug": ["String must match pattern ^[a-z0-9-]+$"]
+  }
+}
+```
+
 #### Criar Usuário Admin (Super Admin)
 
 ```bash
@@ -181,9 +245,32 @@ curl -X POST http://localhost:3000/api/v1/users \
     "email": "admin@empresa.com",
     "name": "Admin User",
     "role": "admin",
-    "companyId": "uuid-da-company",
-    "password": "senha123"
+    "companyId": "uuid-da-company"
   }'
+```
+
+**Resposta de Sucesso (201)**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "email": "admin@empresa.com",
+    "name": "Admin User",
+    "role": "admin",
+    "companyId": "123e4567-e89b-12d3-a456-426614174001"
+  }
+}
+```
+
+**Resposta de Erro (400)**:
+
+```json
+{
+  "success": false,
+  "error": "companyId is required for admin role"
+}
 ```
 
 #### Listar API Keys (Admin)
@@ -191,6 +278,24 @@ curl -X POST http://localhost:3000/api/v1/users \
 ```bash
 curl -X GET http://localhost:3000/api/v1/api-keys \
   -H "Cookie: sb-<project>-auth-token=<jwt_token>"
+```
+
+**Resposta de Sucesso (200)**:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "maskedKey": "sk_abc123_****...",
+      "label": "Produção",
+      "revoked": false,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "revokedAt": null
+    }
+  ]
+}
 ```
 
 #### Gerar API Key (Admin)
@@ -204,7 +309,7 @@ curl -X POST http://localhost:3000/api/v1/api-keys \
   }'
 ```
 
-**Resposta** (mostra a key completa apenas uma vez):
+**Resposta de Sucesso (201)**:
 
 ```json
 {
@@ -218,11 +323,24 @@ curl -X POST http://localhost:3000/api/v1/api-keys \
 }
 ```
 
+⚠️ **IMPORTANTE**: A chave completa é exibida apenas uma vez. Salve-a imediatamente!
+
 #### Revogar API Key (Admin)
 
 ```bash
 curl -X PATCH http://localhost:3000/api/v1/api-keys/<key_id>/revoke \
   -H "Cookie: sb-<project>-auth-token=<jwt_token>"
+```
+
+**Resposta de Sucesso (200)**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": "API key revoked successfully"
+  }
+}
 ```
 
 ### Endpoints de Agendamento (API Key)
@@ -240,6 +358,30 @@ curl -X POST http://localhost:3000/api/v1/professionals \
   }'
 ```
 
+**Resposta de Sucesso (201)**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "name": "Dr. João Silva",
+    "email": "joao@example.com",
+    "phone": "+5511999999999",
+    "created_at": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+**Resposta de Erro (401)**:
+
+```json
+{
+  "success": false,
+  "error": "Unauthorized: Invalid or missing API key"
+}
+```
+
 #### Criar Service
 
 ```bash
@@ -251,6 +393,21 @@ curl -X POST http://localhost:3000/api/v1/services \
     "durationMinutes": 30,
     "price": 150.00
   }'
+```
+
+**Resposta de Sucesso (201)**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "name": "Consulta Médica",
+    "durationMinutes": 30,
+    "price": 150.0,
+    "created_at": "2024-01-01T00:00:00Z"
+  }
+}
 ```
 
 #### Criar Availability
@@ -269,11 +426,63 @@ curl -X POST http://localhost:3000/api/v1/availabilities \
 
 **dayOfWeek**: 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
 
+**Resposta de Sucesso (201)**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "professionalId": "123e4567-e89b-12d3-a456-426614174001",
+    "dayOfWeek": 1,
+    "startTime": "09:00",
+    "endTime": "18:00",
+    "created_at": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+**Resposta de Erro (404)**:
+
+```json
+{
+  "success": false,
+  "error": "Professional not found or doesn't belong to your company"
+}
+```
+
 #### Buscar Slots Disponíveis
 
 ```bash
 curl -X GET "http://localhost:3000/api/v1/professionals/<professional_id>/slots?serviceId=<service_id>&from=2024-01-01T00:00:00Z&to=2024-01-31T23:59:59Z" \
   -H "Authorization: Bearer sk_abc123_def456..."
+```
+
+**Resposta de Sucesso (200)**:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "professionalId": "123e4567-e89b-12d3-a456-426614174001",
+      "serviceId": "123e4567-e89b-12d3-a456-426614174002",
+      "startTime": "2024-01-15T09:00:00Z",
+      "endTime": "2024-01-15T09:30:00Z",
+      "isAvailable": true
+    }
+  ]
+}
+```
+
+**Resposta de Erro (400)**:
+
+```json
+{
+  "success": false,
+  "error": "Query parameters 'from' and 'to' are required (ISO date strings)"
+}
 ```
 
 #### Criar Booking
@@ -290,6 +499,34 @@ curl -X POST http://localhost:3000/api/v1/bookings \
     "customerEmail": "maria@example.com",
     "customerPhone": "+5511888888888"
   }'
+```
+
+**Resposta de Sucesso (201)**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "professionalId": "123e4567-e89b-12d3-a456-426614174001",
+    "serviceId": "123e4567-e89b-12d3-a456-426614174002",
+    "slotId": "123e4567-e89b-12d3-a456-426614174003",
+    "customerName": "Maria Santos",
+    "customerEmail": "maria@example.com",
+    "customerPhone": "+5511888888888",
+    "status": "confirmed",
+    "created_at": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+**Resposta de Erro (400)**:
+
+```json
+{
+  "success": false,
+  "error": "Slot is not available"
+}
 ```
 
 ## 🔄 Testando com n8n
@@ -386,7 +623,7 @@ Principais tabelas:
 ### Erro ao criar usuário
 
 - Certifique-se de que a company existe (para role `admin`)
-- A senha deve ter no mínimo 8 caracteres
+- O email deve ser válido
 
 ### Erro ao criar booking
 
