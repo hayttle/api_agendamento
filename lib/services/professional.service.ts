@@ -9,6 +9,12 @@ export interface CreateProfessionalParams {
   phone?: string | null
 }
 
+export interface UpdateProfessionalParams {
+  name?: string
+  email?: string | null
+  phone?: string | null
+}
+
 export class ProfessionalService {
   async createProfessional(params: CreateProfessionalParams) {
     const supabase = await createServiceClient()
@@ -52,6 +58,27 @@ export class ProfessionalService {
     return data
   }
 
+  async getAllProfessionals(companyId: string) {
+    const supabase = await createServiceClient()
+
+    const {data, error} = await supabase
+      .from("professionals")
+      .select("*")
+      .eq("company_id", companyId)
+      .order("created_at", {ascending: false})
+
+    if (error) {
+      logger.error({
+        message: "Failed to get professionals",
+        error,
+        companyId
+      })
+      throw new Error("Failed to get professionals")
+    }
+
+    return data || []
+  }
+
   async getProfessionalById(id: string, companyId: string) {
     const supabase = await createServiceClient()
 
@@ -73,6 +100,84 @@ export class ProfessionalService {
     }
 
     return data
+  }
+
+  async updateProfessional(id: string, companyId: string, params: UpdateProfessionalParams) {
+    const supabase = await createServiceClient()
+
+    // Verificar se o profissional existe e pertence à company
+    await this.getProfessionalById(id, companyId)
+
+    const updateData: any = {}
+    if (params.name !== undefined) updateData.name = params.name
+    if (params.email !== undefined) updateData.email = params.email
+    if (params.phone !== undefined) updateData.phone = params.phone
+
+    const {data, error} = await supabase
+      .from("professionals")
+      .update(updateData)
+      .eq("id", id)
+      .eq("company_id", companyId)
+      .select()
+      .single()
+
+    if (error || !data) {
+      logger.error({
+        message: "Failed to update professional",
+        error,
+        professionalId: id,
+        companyId
+      })
+      throw new Error("Failed to update professional")
+    }
+
+    await activityLogService.log({
+      companyId,
+      action: "professional_updated",
+      resourceType: "professional",
+      resourceId: id,
+      metadata: updateData
+    })
+
+    logger.info({
+      message: "Professional updated successfully",
+      professionalId: id,
+      companyId
+    })
+
+    return data
+  }
+
+  async deleteProfessional(id: string, companyId: string) {
+    const supabase = await createServiceClient()
+
+    // Verificar se o profissional existe e pertence à company
+    await this.getProfessionalById(id, companyId)
+
+    const {error} = await supabase.from("professionals").delete().eq("id", id).eq("company_id", companyId)
+
+    if (error) {
+      logger.error({
+        message: "Failed to delete professional",
+        error,
+        professionalId: id,
+        companyId
+      })
+      throw new Error("Failed to delete professional")
+    }
+
+    await activityLogService.log({
+      companyId,
+      action: "professional_deleted",
+      resourceType: "professional",
+      resourceId: id
+    })
+
+    logger.info({
+      message: "Professional deleted successfully",
+      professionalId: id,
+      companyId
+    })
   }
 }
 

@@ -11,6 +11,66 @@ const createServiceSchema = z.object({
   price: z.number().positive().optional().nullable()
 })
 
+export async function GET(request: NextRequest) {
+  const startTime = Date.now()
+
+  try {
+    logger.request({
+      method: "GET",
+      path: "/api/v1/services"
+    })
+
+    const authResult = await authenticateApiKey(request)
+    if (!authResult) {
+      const response: ApiResponse = {
+        success: false,
+        error: "Unauthorized: Invalid or missing API key"
+      }
+      logger.warn({
+        message: "Unauthorized request",
+        method: "GET",
+        path: "/api/v1/services",
+        statusCode: 401,
+        duration: Date.now() - startTime
+      })
+      return NextResponse.json(response, {status: 401})
+    }
+
+    const services = await serviceService.getAllServices(authResult.companyId)
+
+    const response: ApiResponse = {
+      success: true,
+      data: services
+    }
+
+    logger.response({
+      method: "GET",
+      path: "/api/v1/services",
+      statusCode: 200,
+      duration: Date.now() - startTime,
+      response: response,
+      companyId: authResult.companyId,
+      apiKeyId: authResult.apiKeyId
+    })
+
+    return NextResponse.json(response, {status: 200})
+  } catch (error) {
+    logger.error({
+      message: "Error getting services",
+      method: "GET",
+      path: "/api/v1/services",
+      error,
+      duration: Date.now() - startTime
+    })
+
+    const response: ApiResponse = {
+      success: false,
+      error: error instanceof Error ? error.message : "Internal server error"
+    }
+    return NextResponse.json(response, {status: 500})
+  }
+}
+
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
 

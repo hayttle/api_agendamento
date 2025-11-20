@@ -14,6 +14,73 @@ const createBookingSchema = z.object({
   customerPhone: z.string().optional().nullable()
 })
 
+export async function GET(request: NextRequest) {
+  const startTime = Date.now()
+
+  try {
+    logger.request({
+      method: "GET",
+      path: "/api/v1/bookings"
+    })
+
+    const authResult = await authenticateApiKey(request)
+    if (!authResult) {
+      const response: ApiResponse = {
+        success: false,
+        error: "Unauthorized: Invalid or missing API key"
+      }
+      logger.warn({
+        message: "Unauthorized request",
+        method: "GET",
+        path: "/api/v1/bookings",
+        statusCode: 401,
+        duration: Date.now() - startTime
+      })
+      return NextResponse.json(response, {status: 401})
+    }
+
+    const {searchParams} = new URL(request.url)
+    const professionalId = searchParams.get("professionalId") || undefined
+    const status = searchParams.get("status") || undefined
+
+    const bookings = await bookingService.getAllBookings(authResult.companyId, {
+      professionalId,
+      status
+    })
+
+    const response: ApiResponse = {
+      success: true,
+      data: bookings
+    }
+
+    logger.response({
+      method: "GET",
+      path: "/api/v1/bookings",
+      statusCode: 200,
+      duration: Date.now() - startTime,
+      response: response,
+      companyId: authResult.companyId,
+      apiKeyId: authResult.apiKeyId
+    })
+
+    return NextResponse.json(response, {status: 200})
+  } catch (error) {
+    logger.error({
+      message: "Error getting bookings",
+      method: "GET",
+      path: "/api/v1/bookings",
+      error,
+      duration: Date.now() - startTime
+    })
+
+    const response: ApiResponse = {
+      success: false,
+      error: error instanceof Error ? error.message : "Internal server error"
+    }
+    return NextResponse.json(response, {status: 500})
+  }
+}
+
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
 

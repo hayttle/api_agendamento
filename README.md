@@ -537,19 +537,37 @@ curl -X POST http://localhost:3000/api/v1/bookings \
 2. Acesse `/admin/api-keys`
 3. Clique em "Gerar API Key"
 4. **Copie a key imediatamente** (ela só será exibida uma vez)
+5. Exemplo de API Key: `sk_123e4567-e89b-12d3-a456-426614174000_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`
 
-### Passo 2: Configurar n8n
+### Passo 2: Configurar Autenticação no n8n
+
+#### Opção A: Usando Credentials (Recomendado - Reutilizável)
+
+1. No n8n, vá em **Credentials** (menu lateral)
+2. Clique em **Add Credential**
+3. Procure por **Header Auth** ou **Generic Credential Type**
+4. Configure:
+   - **Header Name**: `Authorization`
+   - **Header Value**: `Bearer <sua-api-key>` (substitua `<sua-api-key>` pela chave completa)
+   - **Name**: `API Agendamento v2` (ou qualquer nome descritivo)
+5. Salve a credential
+
+**Vantagem**: Você pode reutilizar esta credential em todos os nós HTTP Request do workflow.
+
+#### Opção B: Configurar Manualmente em Cada Nó
 
 1. Crie um novo workflow no n8n
 2. Adicione um nó **HTTP Request**
 3. Configure:
-   - **Method**: POST
+   - **Method**: POST (ou GET, PUT, DELETE conforme o endpoint)
    - **URL**: `http://localhost:3000/api/v1/professionals`
    - **Authentication**: None
-   - **Headers**:
-     - `Content-Type`: `application/json`
-     - `Authorization`: `Bearer <sua-api-key>`
-   - **Body** (JSON):
+   - **Headers** (adicione manualmente):
+     - **Name**: `Authorization`
+     - **Value**: `Bearer <sua-api-key>` (substitua `<sua-api-key>` pela chave completa)
+     - **Name**: `Content-Type`
+     - **Value**: `application/json`
+   - **Body** (JSON) - apenas para POST/PUT:
      ```json
      {
        "name": "Dr. João Silva",
@@ -558,14 +576,120 @@ curl -X POST http://localhost:3000/api/v1/bookings \
      }
      ```
 
-### Passo 3: Testar outros endpoints
+### Passo 3: Exemplos de Endpoints
 
-Repita o processo para:
+#### Criar Professional (POST)
 
-- Criar services (`/api/v1/services`)
-- Criar availabilities (`/api/v1/availabilities`)
-- Buscar slots (`/api/v1/professionals/:id/slots`)
-- Criar bookings (`/api/v1/bookings`)
+- **URL**: `http://localhost:3000/api/v1/professionals`
+- **Method**: POST
+- **Headers**: `Authorization: Bearer <sua-api-key>`
+- **Body**:
+  ```json
+  {
+    "name": "Dr. João Silva",
+    "email": "joao@example.com",
+    "phone": "+5511999999999"
+  }
+  ```
+
+#### Listar Professionals (GET)
+
+- **URL**: `http://localhost:3000/api/v1/professionals`
+- **Method**: GET
+- **Headers**: `Authorization: Bearer <sua-api-key>`
+- **Body**: Não necessário
+
+#### Buscar Professional por ID (GET)
+
+- **URL**: `http://localhost:3000/api/v1/professionals/{id}`
+- **Method**: GET
+- **Headers**: `Authorization: Bearer <sua-api-key>`
+- Substitua `{id}` pelo UUID do professional
+
+#### Atualizar Professional (PUT)
+
+- **URL**: `http://localhost:3000/api/v1/professionals/{id}`
+- **Method**: PUT
+- **Headers**: `Authorization: Bearer <sua-api-key>`
+- **Body**:
+  ```json
+  {
+    "name": "Dr. João Silva Atualizado",
+    "email": "joao.updated@example.com"
+  }
+  ```
+
+#### Deletar Professional (DELETE)
+
+- **URL**: `http://localhost:3000/api/v1/professionals/{id}`
+- **Method**: DELETE
+- **Headers**: `Authorization: Bearer <sua-api-key>`
+- **Body**: Não necessário
+
+#### Buscar Slots Disponíveis (GET)
+
+- **URL**: `http://localhost:3000/api/v1/professionals/{id}/slots?from=2024-01-01T00:00:00Z&to=2024-01-31T23:59:59Z&serviceId={serviceId}`
+- **Method**: GET
+- **Headers**: `Authorization: Bearer <sua-api-key>`
+- **Query Parameters**:
+  - `from`: Data/hora inicial (ISO 8601) - **obrigatório**
+  - `to`: Data/hora final (ISO 8601) - **obrigatório**
+  - `serviceId`: ID do serviço (opcional)
+
+#### Criar Service (POST)
+
+- **URL**: `http://localhost:3000/api/v1/services`
+- **Method**: POST
+- **Headers**: `Authorization: Bearer <sua-api-key>`
+- **Body**:
+  ```json
+  {
+    "name": "Consulta Médica",
+    "durationMinutes": 30,
+    "price": 150.0
+  }
+  ```
+
+#### Criar Availability (POST)
+
+- **URL**: `http://localhost:3000/api/v1/availabilities`
+- **Method**: POST
+- **Headers**: `Authorization: Bearer <sua-api-key>`
+- **Body**:
+  ```json
+  {
+    "professionalId": "123e4567-e89b-12d3-a456-426614174000",
+    "dayOfWeek": 1,
+    "startTime": "09:00",
+    "endTime": "18:00"
+  }
+  ```
+- **dayOfWeek**: 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
+
+#### Criar Booking (POST)
+
+- **URL**: `http://localhost:3000/api/v1/bookings`
+- **Method**: POST
+- **Headers**: `Authorization: Bearer <sua-api-key>`
+- **Body**:
+  ```json
+  {
+    "professionalId": "123e4567-e89b-12d3-a456-426614174000",
+    "serviceId": "123e4567-e89b-12d3-a456-426614174001",
+    "slotId": "123e4567-e89b-12d3-a456-426614174002",
+    "customerName": "João Silva",
+    "customerEmail": "joao@example.com",
+    "customerPhone": "+5511999999999"
+  }
+  ```
+
+### Passo 4: Dicas Importantes
+
+- **API Key**: Sempre use no formato `Bearer <sua-api-key>` no header Authorization
+- **Content-Type**: Use `application/json` para requisições com body
+- **URLs**: Para produção, substitua `localhost:3000` pela URL do seu servidor
+- **Erro 401**: Verifique se a API Key está correta e não foi revogada
+- **Erro 404**: Verifique se o ID do recurso existe e pertence à sua company
 
 ## 🔒 Segurança
 

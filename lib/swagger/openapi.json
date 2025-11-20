@@ -292,7 +292,7 @@
       "get": {
         "tags": ["Administrativos"],
         "summary": "Listar todas as companies",
-        "description": "Lista todas as companies do sistema. Requer autenticação como Super Admin.",
+        "description": "Lista todas as companies do sistema. Requer autenticação como Super Admin.\n\n**Exemplo de requisição:**\n```bash\ncurl -X GET http://localhost:3000/api/v1/companies \\\n  -H \"Authorization: Bearer <JWT_TOKEN>\" \\\n  -H \"Content-Type: application/json\"\n```",
         "security": [{"JWT": []}],
         "responses": {
           "200": {
@@ -350,7 +350,7 @@
       "post": {
         "tags": ["Administrativos"],
         "summary": "Criar uma nova company",
-        "description": "Cria uma nova company no sistema. Requer autenticação como Super Admin.",
+        "description": "Cria uma nova company no sistema. Requer autenticação como Super Admin.\n\n**Exemplo de requisição:**\n```bash\ncurl -X POST http://localhost:3000/api/v1/companies \\\n  -H \"Authorization: Bearer <JWT_TOKEN>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"name\": \"Minha Empresa\",\n    \"slug\": \"minha-empresa\"\n  }'\n```",
         "security": [{"JWT": []}],
         "requestBody": {
           "required": true,
@@ -447,7 +447,7 @@
       "get": {
         "tags": ["Administrativos"],
         "summary": "Listar todos os usuários",
-        "description": "Lista todos os usuários do sistema. Requer autenticação como Super Admin.",
+        "description": "Lista todos os usuários do sistema. Requer autenticação como Super Admin.\n\n**Exemplo de requisição:**\n```bash\ncurl -X GET http://localhost:3000/api/v1/users \\\n  -H \"Authorization: Bearer <JWT_TOKEN>\" \\\n  -H \"Content-Type: application/json\"\n```",
         "security": [{"JWT": []}],
         "responses": {
           "200": {
@@ -507,7 +507,7 @@
       "post": {
         "tags": ["Administrativos"],
         "summary": "Criar um novo usuário",
-        "description": "Cria um novo usuário e envia convite por email. Requer autenticação como Super Admin.",
+        "description": "Cria um novo usuário e envia convite por email. Requer autenticação como Super Admin.\n\n**Exemplo de requisição:**\n```bash\ncurl -X POST http://localhost:3000/api/v1/users \\\n  -H \"Authorization: Bearer <JWT_TOKEN>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"email\": \"admin@empresa.com\",\n    \"name\": \"Admin User\",\n    \"role\": \"admin\",\n    \"companyId\": \"123e4567-e89b-12d3-a456-426614174001\"\n  }'\n```",
         "security": [{"JWT": []}],
         "requestBody": {
           "required": true,
@@ -629,7 +629,7 @@
       "get": {
         "tags": ["Administrativos"],
         "summary": "Listar API Keys",
-        "description": "Lista todas as API Keys da company do usuário autenticado. Requer autenticação como Admin.",
+        "description": "Lista todas as API Keys da company do usuário autenticado. Requer autenticação como Admin.\n\n**Exemplo de requisição:**\n```bash\ncurl -X GET http://localhost:3000/api/v1/api-keys \\\n  -H \"Authorization: Bearer <JWT_TOKEN>\" \\\n  -H \"Content-Type: application/json\"\n```",
         "security": [{"JWT": []}],
         "responses": {
           "200": {
@@ -700,7 +700,7 @@
       "post": {
         "tags": ["Administrativos"],
         "summary": "Gerar nova API Key",
-        "description": "Gera uma nova API Key para a company do usuário autenticado. A chave completa é retornada apenas uma vez. Requer autenticação como Admin.",
+        "description": "Gera uma nova API Key para a company do usuário autenticado. A chave completa é retornada apenas uma vez. Requer autenticação como Admin.\n\n**Exemplo de requisição:**\n```bash\ncurl -X POST http://localhost:3000/api/v1/api-keys \\\n  -H \"Authorization: Bearer <JWT_TOKEN>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"label\": \"Produção\"\n  }'\n```",
         "security": [{"JWT": []}],
         "requestBody": {
           "required": true,
@@ -800,7 +800,7 @@
       "patch": {
         "tags": ["Administrativos"],
         "summary": "Revogar API Key",
-        "description": "Revoga uma API Key específica. Requer autenticação como Admin.",
+        "description": "Revoga uma API Key específica. Requer autenticação como Admin.\n\n**Exemplo de requisição:**\n```bash\ncurl -X PATCH http://localhost:3000/api/v1/api-keys/123e4567-e89b-12d3-a456-426614174000/revoke \\\n  -H \"Authorization: Bearer <JWT_TOKEN>\" \\\n  -H \"Content-Type: application/json\"\n```",
         "security": [{"JWT": []}],
         "parameters": [
           {
@@ -891,10 +891,69 @@
       }
     },
     "/professionals": {
+      "get": {
+        "tags": ["Agendamentos"],
+        "summary": "Listar Professionals",
+        "description": "Lista todos os professionals da company associada à API Key.\n\n**Exemplo de requisição:**\n```bash\ncurl -X GET http://localhost:3000/api/v1/professionals \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\"\n```",
+        "security": [{"ApiKeyAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Lista de professionals retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Professional"}
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "name": "Dr. João Silva",
+                      "email": "joao@example.com",
+                      "phone": "+5511999999999",
+                      "created_at": "2024-01-01T00:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": ["Agendamentos"],
         "summary": "Criar Professional",
-        "description": "Cria um novo professional na company associada à API Key.",
+        "description": "Cria um novo professional na company associada à API Key.\n\n**Exemplo de requisição:**\n```bash\ncurl -X POST http://localhost:3000/api/v1/professionals \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"name\": \"Dr. João Silva\",\n    \"email\": \"joao@example.com\",\n    \"phone\": \"+5511999999999\"\n  }'\n```",
         "security": [{"ApiKeyAuth": []}],
         "requestBody": {
           "required": true,
@@ -995,11 +1054,292 @@
         }
       }
     },
+    "/professionals/{id}": {
+      "get": {
+        "tags": ["Agendamentos"],
+        "summary": "Buscar Professional por ID",
+        "description": "Busca um professional específico por ID na company associada à API Key.\n\n**Exemplo de requisição:**\n```bash\ncurl -X GET http://localhost:3000/api/v1/professionals/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\"\n```",
+        "security": [{"ApiKeyAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Professional encontrado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {"$ref": "#/components/schemas/Professional"}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "Dr. João Silva",
+                    "email": "joao@example.com",
+                    "phone": "+5511999999999",
+                    "created_at": "2024-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Professional não encontrado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Professional not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Agendamentos"],
+        "summary": "Atualizar Professional",
+        "description": "Atualiza um professional existente na company associada à API Key.\n\n**Exemplo de requisição:**\n```bash\ncurl -X PUT http://localhost:3000/api/v1/professionals/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"name\": \"Dr. João Silva\",\n    \"email\": \"joao.updated@example.com\",\n    \"phone\": \"+5511888888888\"\n  }'\n```",
+        "security": [{"ApiKeyAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "Dr. João Silva"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "nullable": true,
+                    "example": "joao@example.com"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "+5511999999999"
+                  }
+                }
+              },
+              "example": {
+                "name": "Dr. João Silva",
+                "email": "joao.updated@example.com",
+                "phone": "+5511888888888"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Professional atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {"$ref": "#/components/schemas/Professional"}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "Dr. João Silva",
+                    "email": "joao.updated@example.com",
+                    "phone": "+5511888888888",
+                    "created_at": "2024-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Validation error",
+                  "errors": {
+                    "email": ["Invalid email"]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Professional não encontrado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Professional not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Agendamentos"],
+        "summary": "Deletar Professional",
+        "description": "Deleta um professional da company associada à API Key.\n\n**Exemplo de requisição:**\n```bash\ncurl -X DELETE http://localhost:3000/api/v1/professionals/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\"\n```",
+        "security": [{"ApiKeyAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Professional deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "message": {"type": "string", "example": "Professional deleted successfully"}
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "message": "Professional deleted successfully"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Professional não encontrado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Professional not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/professionals/{id}/slots": {
       "get": {
         "tags": ["Agendamentos"],
         "summary": "Buscar Slots Disponíveis",
-        "description": "Busca slots disponíveis para um professional em um período específico.",
+        "description": "Busca slots disponíveis para um professional em um período específico.\n\n**Exemplo de requisição:**\n```bash\ncurl -X GET \"http://localhost:3000/api/v1/professionals/123e4567-e89b-12d3-a456-426614174000/slots?from=2024-01-01T00:00:00Z&to=2024-01-31T23:59:59Z&serviceId=123e4567-e89b-12d3-a456-426614174001\" \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\"\n```",
         "security": [{"ApiKeyAuth": []}],
         "parameters": [
           {
@@ -1114,10 +1454,69 @@
       }
     },
     "/services": {
+      "get": {
+        "tags": ["Agendamentos"],
+        "summary": "Listar Services",
+        "description": "Lista todos os services da company associada à API Key.\n\n**Exemplo de requisição:**\n```bash\ncurl -X GET http://localhost:3000/api/v1/services \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\"\n```",
+        "security": [{"ApiKeyAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Lista de services retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Service"}
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "name": "Consulta Médica",
+                      "durationMinutes": 30,
+                      "price": 150.0,
+                      "created_at": "2024-01-01T00:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": ["Agendamentos"],
         "summary": "Criar Service",
-        "description": "Cria um novo serviço na company associada à API Key.",
+        "description": "Cria um novo serviço na company associada à API Key.\n\n**Exemplo de requisição:**\n```bash\ncurl -X POST http://localhost:3000/api/v1/services \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"name\": \"Consulta Médica\",\n    \"durationMinutes\": 30,\n    \"price\": 150.0\n  }'\n```",
         "security": [{"ApiKeyAuth": []}],
         "requestBody": {
           "required": true,
@@ -1218,11 +1617,366 @@
         }
       }
     },
+    "/services/{id}": {
+      "get": {
+        "tags": ["Agendamentos"],
+        "summary": "Buscar Service por ID",
+        "description": "Busca um service específico por ID na company associada à API Key.\n\n**Exemplo de requisição:**\n```bash\ncurl -X GET http://localhost:3000/api/v1/services/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\"\n```",
+        "security": [{"ApiKeyAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service encontrado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {"$ref": "#/components/schemas/Service"}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "Consulta Médica",
+                    "durationMinutes": 30,
+                    "price": 150.0,
+                    "created_at": "2024-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Service não encontrado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Service not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Agendamentos"],
+        "summary": "Atualizar Service",
+        "description": "Atualiza um service existente na company associada à API Key.\n\n**Exemplo de requisição:**\n```bash\ncurl -X PUT http://localhost:3000/api/v1/services/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"name\": \"Consulta Médica Atualizada\",\n    \"durationMinutes\": 45,\n    \"price\": 200.0\n  }'\n```",
+        "security": [{"ApiKeyAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "Consulta Médica"
+                  },
+                  "durationMinutes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 30
+                  },
+                  "price": {
+                    "type": "number",
+                    "minimum": 0,
+                    "nullable": true,
+                    "example": 150.0
+                  }
+                }
+              },
+              "example": {
+                "name": "Consulta Médica Atualizada",
+                "durationMinutes": 45,
+                "price": 200.0
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Service atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {"$ref": "#/components/schemas/Service"}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "Consulta Médica Atualizada",
+                    "durationMinutes": 45,
+                    "price": 200.0,
+                    "created_at": "2024-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Validation error",
+                  "errors": {
+                    "durationMinutes": ["Number must be positive"],
+                    "price": ["Number must be positive"]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Service não encontrado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Service not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Agendamentos"],
+        "summary": "Deletar Service",
+        "description": "Deleta um service da company associada à API Key.\n\n**Exemplo de requisição:**\n```bash\ncurl -X DELETE http://localhost:3000/api/v1/services/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\"\n```",
+        "security": [{"ApiKeyAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "message": {"type": "string", "example": "Service deleted successfully"}
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "message": "Service deleted successfully"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Service não encontrado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Service not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/availabilities": {
+      "get": {
+        "tags": ["Agendamentos"],
+        "summary": "Listar Availabilities",
+        "description": "Lista todas as availabilities da company associada à API Key. Pode filtrar por professionalId.\n\n**Exemplo de requisição:**\n```bash\ncurl -X GET \"http://localhost:3000/api/v1/availabilities?professionalId=123e4567-e89b-12d3-a456-426614174000\" \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\"\n```",
+        "security": [{"ApiKeyAuth": []}],
+        "parameters": [
+          {
+            "name": "professionalId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID do professional (opcional - filtra por professional)",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de availabilities retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Availability"}
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "professionalId": "123e4567-e89b-12d3-a456-426614174001",
+                      "dayOfWeek": 1,
+                      "startTime": "09:00",
+                      "endTime": "18:00",
+                      "created_at": "2024-01-01T00:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": ["Agendamentos"],
         "summary": "Criar Availability",
-        "description": "Cria uma nova disponibilidade para um professional.",
+        "description": "Cria uma nova disponibilidade para um professional.\n\n**Exemplo de requisição:**\n```bash\ncurl -X POST http://localhost:3000/api/v1/availabilities \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"professionalId\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"dayOfWeek\": 1,\n    \"startTime\": \"09:00\",\n    \"endTime\": \"18:00\"\n  }'\n```",
         "security": [{"ApiKeyAuth": []}],
         "requestBody": {
           "required": true,
@@ -1342,11 +2096,383 @@
         }
       }
     },
+    "/availabilities/{id}": {
+      "get": {
+        "tags": ["Agendamentos"],
+        "summary": "Buscar Availability por ID",
+        "description": "Busca uma availability específica por ID na company associada à API Key.\n\n**Exemplo de requisição:**\n```bash\ncurl -X GET http://localhost:3000/api/v1/availabilities/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\"\n```",
+        "security": [{"ApiKeyAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Availability encontrada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {"$ref": "#/components/schemas/Availability"}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "professionalId": "123e4567-e89b-12d3-a456-426614174001",
+                    "dayOfWeek": 1,
+                    "startTime": "09:00",
+                    "endTime": "18:00",
+                    "created_at": "2024-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Availability não encontrada",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Availability not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Agendamentos"],
+        "summary": "Atualizar Availability",
+        "description": "Atualiza uma availability existente na company associada à API Key.\n\n**Exemplo de requisição:**\n```bash\ncurl -X PUT http://localhost:3000/api/v1/availabilities/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"dayOfWeek\": 2,\n    \"startTime\": \"10:00\",\n    \"endTime\": \"19:00\"\n  }'\n```",
+        "security": [{"ApiKeyAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dayOfWeek": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 6,
+                    "description": "0 = Domingo, 1 = Segunda, ..., 6 = Sábado",
+                    "example": 1
+                  },
+                  "startTime": {
+                    "type": "string",
+                    "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$",
+                    "example": "09:00"
+                  },
+                  "endTime": {
+                    "type": "string",
+                    "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$",
+                    "example": "18:00"
+                  }
+                }
+              },
+              "example": {
+                "dayOfWeek": 2,
+                "startTime": "10:00",
+                "endTime": "19:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Availability atualizada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {"$ref": "#/components/schemas/Availability"}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "professionalId": "123e4567-e89b-12d3-a456-426614174001",
+                    "dayOfWeek": 2,
+                    "startTime": "10:00",
+                    "endTime": "19:00",
+                    "created_at": "2024-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Validation error",
+                  "errors": {
+                    "dayOfWeek": ["Number must be less than or equal to 6"],
+                    "startTime": ["String must match pattern"]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Availability não encontrada",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Availability not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Agendamentos"],
+        "summary": "Deletar Availability",
+        "description": "Deleta uma availability da company associada à API Key.\n\n**Exemplo de requisição:**\n```bash\ncurl -X DELETE http://localhost:3000/api/v1/availabilities/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\"\n```",
+        "security": [{"ApiKeyAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Availability deletada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "message": {"type": "string", "example": "Availability deleted successfully"}
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "message": "Availability deleted successfully"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Availability não encontrada",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Availability not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/bookings": {
+      "get": {
+        "tags": ["Agendamentos"],
+        "summary": "Listar Bookings",
+        "description": "Lista todos os bookings da company associada à API Key. Pode filtrar por professionalId e status.\n\n**Exemplo de requisição:**\n```bash\ncurl -X GET \"http://localhost:3000/api/v1/bookings?professionalId=123e4567-e89b-12d3-a456-426614174000&status=confirmed\" \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\"\n```",
+        "security": [{"ApiKeyAuth": []}],
+        "parameters": [
+          {
+            "name": "professionalId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID do professional (opcional - filtra por professional)",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["pending", "confirmed", "cancelled", "completed"]
+            },
+            "description": "Status do booking (opcional - filtra por status)",
+            "example": "confirmed"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de bookings retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Booking"}
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "professionalId": "123e4567-e89b-12d3-a456-426614174001",
+                      "serviceId": "123e4567-e89b-12d3-a456-426614174002",
+                      "slotId": "123e4567-e89b-12d3-a456-426614174003",
+                      "customerName": "João Silva",
+                      "customerEmail": "joao@example.com",
+                      "customerPhone": "+5511999999999",
+                      "status": "confirmed",
+                      "created_at": "2024-01-01T00:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": ["Agendamentos"],
         "summary": "Criar Booking",
-        "description": "Cria um novo agendamento. O slot deve estar disponível e pertencer ao professional e service especificados.",
+        "description": "Cria um novo agendamento. O slot deve estar disponível e pertencer ao professional e service especificados.\n\n**Exemplo de requisição:**\n```bash\ncurl -X POST http://localhost:3000/api/v1/bookings \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"professionalId\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"serviceId\": \"123e4567-e89b-12d3-a456-426614174001\",\n    \"slotId\": \"123e4567-e89b-12d3-a456-426614174002\",\n    \"customerName\": \"João Silva\",\n    \"customerEmail\": \"joao@example.com\",\n    \"customerPhone\": \"+5511999999999\"\n  }'\n```",
         "security": [{"ApiKeyAuth": []}],
         "requestBody": {
           "required": true,
@@ -1489,7 +2615,301 @@
           }
         }
       }
+    },
+    "/bookings/{id}": {
+      "get": {
+        "tags": ["Agendamentos"],
+        "summary": "Buscar Booking por ID",
+        "description": "Busca um booking específico por ID na company associada à API Key.\n\n**Exemplo de requisição:**\n```bash\ncurl -X GET http://localhost:3000/api/v1/bookings/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\"\n```",
+        "security": [{"ApiKeyAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking encontrado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {"$ref": "#/components/schemas/Booking"}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "professionalId": "123e4567-e89b-12d3-a456-426614174001",
+                    "serviceId": "123e4567-e89b-12d3-a456-426614174002",
+                    "slotId": "123e4567-e89b-12d3-a456-426614174003",
+                    "customerName": "João Silva",
+                    "customerEmail": "joao@example.com",
+                    "customerPhone": "+5511999999999",
+                    "status": "confirmed",
+                    "created_at": "2024-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Booking não encontrado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Booking not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Agendamentos"],
+        "summary": "Atualizar Booking",
+        "description": "Atualiza um booking existente na company associada à API Key.\n\n**Exemplo de requisição:**\n```bash\ncurl -X PUT http://localhost:3000/api/v1/bookings/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"customerName\": \"João Silva Atualizado\",\n    \"customerEmail\": \"joao.updated@example.com\",\n    \"status\": \"completed\"\n  }'\n```",
+        "security": [{"ApiKeyAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "customerName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "João Silva"
+                  },
+                  "customerEmail": {
+                    "type": "string",
+                    "format": "email",
+                    "nullable": true,
+                    "example": "joao@example.com"
+                  },
+                  "customerPhone": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "+5511999999999"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["pending", "confirmed", "cancelled", "completed"],
+                    "example": "confirmed"
+                  }
+                }
+              },
+              "example": {
+                "customerName": "João Silva Atualizado",
+                "customerEmail": "joao.updated@example.com",
+                "customerPhone": "+5511888888888",
+                "status": "completed"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Booking atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {"$ref": "#/components/schemas/Booking"}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "professionalId": "123e4567-e89b-12d3-a456-426614174001",
+                    "serviceId": "123e4567-e89b-12d3-a456-426614174002",
+                    "slotId": "123e4567-e89b-12d3-a456-426614174003",
+                    "customerName": "João Silva Atualizado",
+                    "customerEmail": "joao.updated@example.com",
+                    "customerPhone": "+5511888888888",
+                    "status": "completed",
+                    "created_at": "2024-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Validation error",
+                  "errors": {
+                    "status": ["Invalid enum value"]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Booking não encontrado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Booking not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Agendamentos"],
+        "summary": "Deletar Booking",
+        "description": "Deleta um booking da company associada à API Key. O slot será marcado como disponível novamente.\n\n**Exemplo de requisição:**\n```bash\ncurl -X DELETE http://localhost:3000/api/v1/bookings/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\"\n```",
+        "security": [{"ApiKeyAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": true},
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "message": {"type": "string", "example": "Booking deleted successfully"}
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "message": "Booking deleted successfully"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou ausente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Unauthorized: Invalid or missing API key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Booking não encontrado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Booking not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
-

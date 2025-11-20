@@ -11,6 +11,66 @@ const createProfessionalSchema = z.object({
   phone: z.string().optional().nullable()
 })
 
+export async function GET(request: NextRequest) {
+  const startTime = Date.now()
+
+  try {
+    logger.request({
+      method: "GET",
+      path: "/api/v1/professionals"
+    })
+
+    const authResult = await authenticateApiKey(request)
+    if (!authResult) {
+      const response: ApiResponse = {
+        success: false,
+        error: "Unauthorized: Invalid or missing API key"
+      }
+      logger.warn({
+        message: "Unauthorized request",
+        method: "GET",
+        path: "/api/v1/professionals",
+        statusCode: 401,
+        duration: Date.now() - startTime
+      })
+      return NextResponse.json(response, {status: 401})
+    }
+
+    const professionals = await professionalService.getAllProfessionals(authResult.companyId)
+
+    const response: ApiResponse = {
+      success: true,
+      data: professionals
+    }
+
+    logger.response({
+      method: "GET",
+      path: "/api/v1/professionals",
+      statusCode: 200,
+      duration: Date.now() - startTime,
+      response: response,
+      companyId: authResult.companyId,
+      apiKeyId: authResult.apiKeyId
+    })
+
+    return NextResponse.json(response, {status: 200})
+  } catch (error) {
+    logger.error({
+      message: "Error getting professionals",
+      method: "GET",
+      path: "/api/v1/professionals",
+      error,
+      duration: Date.now() - startTime
+    })
+
+    const response: ApiResponse = {
+      success: false,
+      error: error instanceof Error ? error.message : "Internal server error"
+    }
+    return NextResponse.json(response, {status: 500})
+  }
+}
+
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
 

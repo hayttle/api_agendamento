@@ -57,6 +57,10 @@ export const ApiKeysList = forwardRef<ApiKeysListRef>((props, ref) => {
     refresh: fetchKeys
   }))
 
+  useEffect(() => {
+    fetchKeys()
+  }, [])
+
   const handleRevoke = async (id: string) => {
     setRevokingId(id)
     try {

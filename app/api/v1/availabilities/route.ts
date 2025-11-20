@@ -12,6 +12,69 @@ const createAvailabilitySchema = z.object({
   endTime: z.string().regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/)
 })
 
+export async function GET(request: NextRequest) {
+  const startTime = Date.now()
+
+  try {
+    logger.request({
+      method: "GET",
+      path: "/api/v1/availabilities"
+    })
+
+    const authResult = await authenticateApiKey(request)
+    if (!authResult) {
+      const response: ApiResponse = {
+        success: false,
+        error: "Unauthorized: Invalid or missing API key"
+      }
+      logger.warn({
+        message: "Unauthorized request",
+        method: "GET",
+        path: "/api/v1/availabilities",
+        statusCode: 401,
+        duration: Date.now() - startTime
+      })
+      return NextResponse.json(response, {status: 401})
+    }
+
+    const {searchParams} = new URL(request.url)
+    const professionalId = searchParams.get("professionalId") || undefined
+
+    const availabilities = await availabilityService.getAllAvailabilities(authResult.companyId, professionalId)
+
+    const response: ApiResponse = {
+      success: true,
+      data: availabilities
+    }
+
+    logger.response({
+      method: "GET",
+      path: "/api/v1/availabilities",
+      statusCode: 200,
+      duration: Date.now() - startTime,
+      response: response,
+      companyId: authResult.companyId,
+      apiKeyId: authResult.apiKeyId
+    })
+
+    return NextResponse.json(response, {status: 200})
+  } catch (error) {
+    logger.error({
+      message: "Error getting availabilities",
+      method: "GET",
+      path: "/api/v1/availabilities",
+      error,
+      duration: Date.now() - startTime
+    })
+
+    const response: ApiResponse = {
+      success: false,
+      error: error instanceof Error ? error.message : "Internal server error"
+    }
+    return NextResponse.json(response, {status: 500})
+  }
+}
+
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
 
